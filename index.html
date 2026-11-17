@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Para ti Mamá 🌹</title>
+    <!-- Tailwind CSS for responsive utilities -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Clean, legible typography matching the video -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #f6ece1;
+            color: #2b211e;
+            overflow: hidden;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Scene container */
+        #scene {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            background-color: #f6ece1;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Initial clickable trigger (00:01) */
+        #start-trigger {
+            position: absolute;
+            z-index: 30;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            padding: 16px 24px;
+            border-radius: 9999px;
+            transition: transform 0.3s ease, opacity 0.45s ease;
+        }
+
+        #start-trigger:hover {
+            transform: scale(1.04);
+        }
+
+        #start-trigger:active {
+            transform: scale(0.97);
+        }
+
+        #start-trigger.hidden-trigger {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .start-label {
+            font-size: clamp(1.1rem, 2.5vw, 1.45rem);
+            font-weight: 500;
+            color: #3a2d28;
+            border-bottom: 1.5px solid #3a2d28;
+            padding-bottom: 2px;
+            letter-spacing: -0.01em;
+        }
+
+        /* Canvas for seed, ground line, organic trunk, branches, heart blossoms & drifting petals */
+        #tree-canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        /* Left-side text & counter overlay (00:07 - 00:15) */
+        #content-overlay {
+            position: absolute;
+            z-index: 20;
+            inset: 0;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: clamp(24px, 5vw, 64px);
+        }
+
+        /* Typewriter dedication container */
+        #letter-box {
+            margin-top: clamp(16px, 5vh, 56px);
+            max-width: 48%;
+            pointer-events: auto;
+        }
+
+        #typed-text {
+            font-size: clamp(0.85rem, 1.65vw, 1.25rem);
+            line-height: 1.5;
+            color: #2b211e;
+            font-weight: 400;
+            white-space: pre-wrap;
+        }
+
+        /* Blinking typewriter cursor */
+        .cursor {
+            display: inline-block;
+            width: 2px;
+            height: 1.1em;
+            background-color: #2b211e;
+            vertical-align: text-bottom;
+            margin-left: 2px;
+            animation: blink 0.8s infinite;
+        }
+
+        @keyframes blink {
+            0%, 49% { opacity: 1; }
+            50%, 100% { opacity: 0; }
+        }
+
+        /* Live counter positioned right above the bottom ground line */
+        #counter-box {
+            position: absolute;
+            left: clamp(24px, 5vw, 64px);
+            opacity: 0;
+            transform: translateY(8px);
+            transition: opacity 1s ease, transform 1s ease;
+            pointer-events: auto;
+            cursor: pointer;
+        }
+
+        #counter-box.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .counter-title {
+            font-size: clamp(0.8rem, 1.45vw, 1.05rem);
+            color: #3d312c;
+            margin-bottom: 4px;
+            font-weight: 400;
+        }
+
+        .counter-values {
+            font-size: clamp(0.88rem, 1.65vw, 1.22rem);
+            color: #221916;
+            font-weight: 400;
+            letter-spacing: -0.01em;
+        }
+
+        .counter-values strong {
+            font-weight: 700;
+            font-size: 1.12em;
+        }
+
+        /* Mobile portrait adjustments so text and tree never overlap awkwardly */
+        @media (max-width: 640px) {
+            #letter-box {
+                max-width: 56%;
+                margin-top: 24px;
+            }
+            #typed-text {
+                font-size: 0.82rem;
+                line-height: 1.42;
+            }
+            #counter-box {
+                max-width: 92%;
+            }
+            .counter-values {
+                font-size: 0.84rem;
+            }
+        }
+
+        /* Subtle modal for customizing start date if clicked */
+        #date-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 50;
+            background: rgba(43, 33, 30, 0.35);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        #date-modal.open {
+            display: flex;
+        }
+    </style>
+</head>
+<body>
+    <main id="scene">
+        <!-- Initial Red Flower + Underlined Text Trigger (00:01) -->
+        <div id="start-trigger" role="button" tabindex="0" aria-label="Abrir dedicatoria para Mamá">
+            <!-- Detailed Crimson Flower SVG matching frame 00:01 -->
+            <svg width="54" height="54" viewBox="0 0 100 100" class="drop-shadow-sm shrink-0">
+                <defs>
+                    <radialGradient id="petalGrad" cx="50%" cy="50%" r="50%">
+                        <stop offset="0%" stop-color="#800f2f"/>
+                        <stop offset="45%" stop-color="#c9184a"/>
+                        <stop offset="85%" stop-color="#ff4d6d"/>
+                        <stop offset="100%" stop-color="#ff758f"/>
+                    </radialGradient>
+                    <radialGradient id="centerGrad" cx="40%" cy="40%" r="60%">
+                        <stop offset="0%" stop-color="#fff3b0"/>
+                        <stop offset="55%" stop-color="#ffb703"/>
+                        <stop offset="100%" stop-color="#e85d04"/>
+                    </radialGradient>
+                </defs>
+                <!-- Outer ring of 12 petals -->
+                <g transform="translate(50,50)">
+                    <g fill="url(#petalGrad)" stroke="#590d22" stroke-width="0.6">
+                        <ellipse rx="9" ry="26" transform="rotate(0) translate(0,-20)"/>
+                        <ellipse rx="9" ry="26" transform="rotate(30) translate(0,-20)"/>
+                        <ellipse rx="9" ry="26" transform="rotate(60) translate(0,-20)"/>
+                        <ellipse rx="9" ry="26" transform="rotate(90) translate(0,-20)"/>
+                        <ellipse rx="9" ry="26" transform="rotate(120) translate(0,-20)"/>
+                        <ellipse rx="9" ry="26" transform="rotate(150) translate(0,-20)"/>
+                        <ellipse rx="9" ry="26" transform="rotate(180) translate(0,-20)"/>
+                        <ellipse rx="9" ry="26" transform="rotate(210) translate(0,-20)"/>
+                        <ellipse rx="9" ry="26" transform="rotate(240) translate(0,-20)"/>
+                        <ellipse rx="9" ry="26" transform="rotate(270) translate(0,-20)"/>
+                        <ellipse rx="9" ry="26" transform="rotate(300) translate(0,-20)"/>
+                        <ellipse rx="9" ry="26" transform="rotate(330) translate(0,-20)"/>
+                    </g>
+                    <!-- Inner ring of rotated petals -->
+                    <g fill="#a4133c" opacity="0.9">
+                        <ellipse rx="6.5" ry="18" transform="rotate(15) translate(0,-14)"/>
+                        <ellipse rx="6.5" ry="18" transform="rotate(45) translate(0,-14)"/>
+                        <ellipse rx="6.5" ry="18" transform="rotate(75) translate(0,-14)"/>
+                        <ellipse rx="6.5" ry="18" transform="rotate(105) translate(0,-14)"/>
+                        <ellipse rx="6.5" ry="18" transform="rotate(135) translate(0,-14)"/>
+                        <ellipse rx="6.5" ry="18" transform="rotate(165) translate(0,-14)"/>
+                        <ellipse rx="6.5" ry="18" transform="rotate(195) translate(0,-14)"/>
+                        <ellipse rx="6.5" ry="18" transform="rotate(225) translate(0,-14)"/>
+                        <ellipse rx="6.5" ry="18" transform="rotate(255) translate(0,-14)"/>
+                        <ellipse rx="6.5" ry="18" transform="rotate(285) translate(0,-14)"/>
+                        <ellipse rx="6.5" ry="18" transform="rotate(315) translate(0,-14)"/>
+                        <ellipse rx="6.5" ry="18" transform="rotate(345) translate(0,-14)"/>
+                    </g>
+                    <!-- Golden flower center -->
+                    <circle r="10.5" fill="url(#centerGrad)" stroke="#9b2226" stroke-width="1"/>
+                    <circle r="5" fill="#d00000" opacity="0.35"/>
+                </g>
+            </svg>
+            <span class="start-label">La mejor Mamá</span>
+        </div>
+
+        <!-- Fullscreen Canvas for the Tree, Blossoms & Ground Line -->
+        <canvas id="tree-canvas"></canvas>
+
+        <!-- Dedication Letter & Live Counter Overlay -->
+        <div id="content-overlay">
+            <div id="letter-box">
+                <div id="typed-text"></div>
+            </div>
+
+            <div id="counter-box" title="Toca para personalizar la fecha de inicio">
+                <p class="counter-title">Mi vida junto a ti comenzó hace...</p>
+                <p id="counter-display" class="counter-values"></p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Discreet Date Customizer Modal -->
+    <div id="date-modal">
+        <div class="bg-[#fffaf5] border border-rose-200 rounded-2xl p-6 max-w-sm w-full shadow-xl text-[#2b211e]">
+            <h2 class="text-lg font-semibold mb-2">Personalizar fecha</h2>
+            <p class="text-xs text-stone-600 mb-4">Elige tu fecha y hora de nacimiento para actualizar el contador en tiempo real:</p>
+            <input type="datetime-local" id="custom-date-input" class="w-full border border-stone-300 rounded-xl px-3 py-2 text-sm mb-4 bg-white focus:outline-none focus:border-rose-500">
+            <div class="flex justify-end gap-2">
+                <button id="cancel-date-btn" class="px-4 py-2 text-xs font-medium rounded-xl bg-stone-200 hover:bg-stone-300 transition">Cancelar</button>
+                <button id="save-date-btn" class="px-4 py-2 text-xs font-medium rounded-xl bg-rose-600 text-white hover:bg-rose-700 transition">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * Exact Choreography & Animation Engine matching the video:
+         * Phase 0: Idle prompt ("La mejor Mamá" with red flower)
+         * Phase 1: Seed drops to center + Ground line expands horizontally from center (00:02)
+         * Phase 2: Organic brown trunk & tapered branches grow upward (00:03 - 00:04)
+         * Phase 3: Hundreds of colorful flowers/hearts bloom in a dense heart canopy (00:04 - 00:05)
+         * Phase 4: Tree glides smoothly to the right side (~72% X) (00:06)
+         * Phase 5: Typewriter letter writes line-by-line on the left + Live counter fades in above ground line + Petals drift gently (00:07 - 00:15)
+         */
+
+        const canvas = document.getElementById('tree-canvas');
+        const ctx = canvas.getContext('2d');
+        const startTrigger = document.getElementById('start-trigger');
+        const typedTextEl = document.getElementById('typed-text');
+        const counterBox = document.getElementById('counter-box');
+        const counterDisplay = document.getElementById('counter-display');
+
+        // Exact text from the video frames (00:07 - 00:15)
+        const DEDICATION_TEXT =
+`Para la mujer más increíble
+de mi vida:
+
+Gracias por tu amor
+incondicional, tus cuidados
+y tu paciencia.
+
+Eres mi mayor inspiración y
+mi refugio más seguro.
+
+— ¡Feliz Día de las Madres!`;
+
+        // Color palette matching the heart canopy in the video
+        const BLOSSOM_COLORS = [
+            '#d90429', // Deep crimson
+            '#ef233c', // Bright red
+            '#ff4d6d', // Vibrant rose pink
+            '#ff758f', // Coral pink
+            '#ff8fa3', // Soft pink
+            '#ffb3c1', // Pastel blush
+            '#fff0f3', // Cream white highlight
+            '#ffb703', // Warm gold/yellow accent
+            '#fb8500', // Soft tangerine accent
+            '#c9184a'  // Rich berry
+        ];
+
+        let width = 0;
+        let height = 0;
+        let dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+        // State machine
+        let state = 'IDLE'; // IDLE -> SEED_DROP -> GROW_TREE -> BLOOM_HEART -> SHIFT_RIGHT -> TYPING
+        let stateStartTime = 0;
+
+        // Tree geometry & layout metrics
+        let groundY = 0;
+        let treeBaseX = 0;
+        let initialTreeX = 0;
+        let targetTreeX = 0;
+        let treeScale = 1;
+
+        // Seed state
+        let seedY = 0;
+        let groundHalfWidth = 0;
+
+        // Branch segments
+        let branches = [];
+        // Heart canopy blossoms
+        let blossoms = [];
+        // Gently falling petals
+        let fallingPetals = [];
+
+        // Default start date calibrated so counter displays ~25 años 19 horas... right now
+        const nowInit = new Date();
+        let startDate = new Date(
+            nowInit.getFullYear() - 25,
+            nowInit.getMonth(),
+            nowInit.getDate(),
+            nowInit.getHours() - 19,
+            nowInit.getMinutes(),
+            nowInit.getSeconds() - 44
+        );
+
+        // Load saved custom date if user previously customized it
+        const savedTimestamp = localStorage.getItem('mama_start_date');
+        if (savedTimestamp) {
+            const parsed = new Date(Number(savedTimestamp));
+            if (!isNaN(parsed.getTime())) startDate = parsed;
+        }
+
+        function resizeCanvas() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+            canvas.width = width * dpr;
+            canvas.height = height * dpr;
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+            // Position ground line near bottom (matching video proportion ~86% height)
+            groundY = Math.round(height * 0.87);
+
+            // Position counter right above the ground line
+            counterBox.style.bottom = `${height - groundY + 14}px`;
+
+            // Responsive tree scaling
+            const minDim = Math.min(width, height);
+            treeScale = Math.max(0.62, Math.min(1.18, minDim / 640));
+
+            initialTreeX = width * 0.5;
+            targetTreeX = width < 640 ? width * 0.72 : width * 0.71;
+
+            if (state === 'IDLE' || state === 'SEED_DROP' || state === 'GROW_TREE' || state === 'BLOOM_HEART') {
+                treeBaseX = initialTreeX;
+            } else if (state === 'TYPING') {
+                treeBaseX = targetTreeX;
+            }
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        /**
+         * Build organic curved trunk and main/secondary branches
+         * Coordinates are relative to (0, 0) at the tree's base on the ground line.
+         */
+        function initTreeStructure() {
+            branches = [];
+            const s = treeScale;
+
+            // Main Trunk (grows from y=0 up to y=-175*s)
+            branches.push({
+                p0: { x: 0, y: 0 },
+                p1: { x: -6 * s, y: -65 * s },
+                p2: { x: 8 * s, y: -120 * s },
+                p3: { x: 0, y: -175 * s },
+                startWidth: 18 * s,
+                endWidth: 7 * s,
+                delay: 0,
+                duration: 950
+            });
+
+            // Left primary branch
+            branches.push({
+                p0: { x: 2 * s, y: -115 * s },
+                p1: { x: -25 * s, y: -140 * s },
+                p2: { x: -58 * s, y: -165 * s },
+                p3: { x: -82 * s, y: -198 * s },
+                startWidth: 8 * s,
+                endWidth: 2.2 * s,
+                delay: 520,
+                duration: 750
+            });
+
+            // Right primary branch
+            branches.push({
+                p0: { x: 3 * s, y: -125 * s },
+                p1: { x: 32 * s, y: -148 * s },
+                p2: { x: 65 * s, y: -172 * s },
+                p3: { x: 88 * s, y: -202 * s },
+                startWidth: 7.5 * s,
+                endWidth: 2.2 * s,
+                delay: 580,
+                duration: 750
+            });
+
+            // Upper-left fork
+            branches.push({
+                p0: { x: 0, y: -155 * s },
+                p1: { x: -16 * s, y: -182 * s },
+                p2: { x: -34 * s, y: -206 * s },
+                p3: { x: -46 * s, y: -232 * s },
+                startWidth: 6 * s,
+                endWidth: 1.8 * s,
+                delay: 720,
+                duration: 680
+            });
+
+            // Upper-right fork
+            branches.push({
+                p0: { x: 1 * s, y: -158 * s },
+                p1: { x: 20 * s, y: -186 * s },
+                p2: { x: 38 * s, y: -208 * s },
+                p3: { x: 52 * s, y: -234 * s },
+                startWidth: 6 * s,
+                endWidth: 1.8 * s,
+                delay: 760,
+                duration: 680
+            });
+
+            // Secondary sub-twigs for realism
+            branches.push({
+                p0: { x: -42 * s, y: -155 * s },
+                p1: { x: -46 * s, y: -178 * s },
+                p2: { x: -42 * s, y: -195 * s },
+                p3: { x: -38 * s, y: -214 * s },
+                startWidth: 3.5 * s,
+                endWidth: 1.2 * s,
+                delay: 860,
+                duration: 550
+            });
+
+            branches.push({
+                p0: { x: 46 * s, y: -160 * s },
+                p1: { x: 52 * s, y: -182 * s },
+                p2: { x: 48 * s, y: -198 * s },
+                p3: { x: 42 * s, y: -216 * s },
+                startWidth: 3.5 * s,
+                endWidth: 1.2 * s,
+                delay: 900,
+                duration: 550
+            });
+        }
+
+        /**
+         * Generate ~440 lush flower/heart blossoms inside a parametric heart silhouette
+         * Centered above the trunk at (0, -225 * treeScale)
+         */
+        function initHeartBlossoms() {
+            blossoms = [];
+            const s = treeScale;
+            const heartCenterY = -222 * s;
+            const heartScale = 8.4 * s;
+            const count = 460;
+
+            for (let i = 0; i < count; i++) {
+                // Sample points throughout the interior and perimeter of the heart
+                const t = Math.random() * Math.PI * 2;
+                // Bias slightly toward outer edge for a crisp heart outline while keeping center lush
+                const r = Math.pow(Math.random(), 0.42);
+
+                const hx = 16 * Math.pow(Math.sin(t), 3);
+                const hy = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
+
+                const x = hx * heartScale * r + (Math.random() - 0.5) * 4 * s;
+                const y = heartCenterY + hy * heartScale * r + (Math.random() - 0.5) * 4 * s;
+
+                const color = BLOSSOM_COLORS[Math.floor(Math.random() * BLOSSOM_COLORS.length)];
+                const maxRadius = (4.2 + Math.random() * 4.8) * s;
+                const isHeartShape = Math.random() > 0.48;
+                const rotation = Math.random() * Math.PI * 2;
+
+                // Bloom waves outward from center of canopy
+                const distNorm = r;
+                const delay = distNorm * 850 + Math.random() * 450;
+
+                blossoms.push({
+                    x,
+                    y,
+                    color,
+                    maxRadius,
+                    isHeartShape,
+                    rotation,
+                    delay,
+                    duration: 420 + Math.random() * 250
+                });
+            }
+        }
+
+        /**
+         * Spawn gentle floating petals drifting from the heart canopy to the ground
+         */
+        function spawnFallingPetal() {
+            if (fallingPetals.length > 26) return;
+            const s = treeScale;
+            const t = Math.random() * Math.PI * 2;
+            const r = 0.4 + Math.random() * 0.6;
+            const hx = 16 * Math.pow(Math.sin(t), 3) * 8.2 * s * r;
+            const hy = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)) * 8.2 * s * r;
+
+            fallingPetals.push({
+                x: treeBaseX + hx,
+                y: groundY - 222 * s + hy,
+                vx: -0.45 - Math.random() * 0.75,
+                vy: 0.55 + Math.random() * 0.65,
+                size: (3.2 + Math.random() * 2.8) * s,
+                rotation: Math.random() * Math.PI * 2,
+                vRot: (Math.random() - 0.5) * 0.06,
+                swayPhase: Math.random() * Math.PI * 2,
+                color: BLOSSOM_COLORS[Math.floor(Math.random() * 7)],
+                alpha: 0.95
+            });
+        }
+
+        // Cubic Bezier helper
+        function getBezierPoint(t, p0, p1, p2, p3) {
+            const mt = 1 - t;
+            const mt2 = mt * mt;
+            const t2 = t * t;
+            return {
+                x: mt2 * mt * p0.x + 3 * mt2 * t * p1.x + 3 * mt * t2 * p2.x + t2 * t * p3.x,
+                y: mt2 * mt * p0.y + 3 * mt2 * t * p1.y + 3 * mt * t2 * p2.y + t2 * t * p3.y
+            };
+        }
+
+        // Draw tapered organic branch up to progress [0..1]
+        function drawBranch(b, progress) {
+            if (progress <= 0) return;
+            const steps = Math.max(8, Math.floor(28 * progress));
+            ctx.fillStyle = '#75421b';
+            ctx.strokeStyle = '#5e3312';
+            ctx.lineWidth = 0.6;
+
+            for (let i = 0; i < steps; i++) {
+                const t1 = (i / steps) * progress;
+                const t2 = ((i + 1) / steps) * progress;
+                const pt1 = getBezierPoint(t1, b.p0, b.p1, b.p2, b.p3);
+                const pt2 = getBezierPoint(t2, b.p0, b.p1, b.p2, b.p3);
+
+                const w1 = b.startWidth * (1 - t1) + b.endWidth * t1;
+                const w2 = b.startWidth * (1 - t2) + b.endWidth * t2;
+
+                const angle = Math.atan2(pt2.y - pt1.y, pt2.x - pt1.x);
+                const perpX = -Math.sin(angle);
+                const perpY = Math.cos(angle);
+
+                ctx.beginPath();
+                ctx.moveTo(pt1.x + perpX * (w1 * 0.5), pt1.y + perpY * (w1 * 0.5));
+                ctx.lineTo(pt2.x + perpX * (w2 * 0.5), pt2.y + perpY * (w2 * 0.5));
+                ctx.lineTo(pt2.x - perpX * (w2 * 0.5), pt2.y - perpY * (w2 * 0.5));
+                ctx.lineTo(pt1.x - perpX * (w1 * 0.5), pt1.y - perpY * (w1 * 0.5));
+                ctx.closePath();
+                ctx.fill();
+            }
+        }
+
+        // Draw mini flower or mini heart blossom
+        function drawBlossom(x, y, radius, color, isHeart, rotation) {
+            if (radius <= 0.2) return;
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(rotation);
+            ctx.fillStyle = color;
+
+            if (isHeart) {
+                const s = radius * 0.13;
+                ctx.beginPath();
+                ctx.moveTo(0, -2 * s);
+                ctx.bezierCurveTo(-5 * s, -7 * s, -11 * s, -1 * s, 0, 7 * s);
+                ctx.bezierCurveTo(11 * s, -1 * s, 5 * s, -7 * s, 0, -2 * s);
+                ctx.fill();
+            } else {
+                // 5-petal mini blossom
+                const petalR = radius * 0.52;
+                for (let p = 0; p < 5; p++) {
+                    const a = (p * Math.PI * 2) / 5;
+                    ctx.beginPath();
+                    ctx.arc(Math.cos(a) * petalR * 0.72, Math.sin(a) * petalR * 0.72, petalR * 0.65, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                // Tiny contrasting center dot
+                ctx.fillStyle = '#fff3b0';
+                ctx.beginPath();
+                ctx.arc(0, 0, radius * 0.22, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.restore();
+        }
+
+        // Smooth easing helpers
+        function easeOutCubic(t) {
+            return 1 - Math.pow(1 - t, 3);
+        }
+
+        function easeInOutCubic(t) {
+            return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        }
+
+        function easeOutBack(t) {
+            const c1 = 1.70158;
+            const c3 = c1 + 1;
+            return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+        }
+
+        // Main Render Loop
+        function render(now) {
+            ctx.clearRect(0, 0, width, height);
+
+            if (state === 'IDLE') {
+                requestAnimationFrame(render);
+                return;
+            }
+
+            const elapsed = now - stateStartTime;
+
+            // PHASE 1: Seed drop + expanding horizontal ground line (00:02)
+            if (state === 'SEED_DROP') {
+                const duration = 650;
+                const p = Math.min(1, elapsed / duration);
+                const ease = easeOutCubic(p);
+
+                const startY = height * 0.5;
+                seedY = startY + (groundY - startY) * ease;
+                groundHalfWidth = (width * 0.46) * ease;
+
+                // Ground line
+                ctx.strokeStyle = '#2b211e';
+                ctx.lineWidth = 2.2;
+                ctx.beginPath();
+                ctx.moveTo(initialTreeX - groundHalfWidth, groundY);
+                ctx.lineTo(initialTreeX + groundHalfWidth, groundY);
+                ctx.stroke();
+
+                // Brown seed dot
+                ctx.fillStyle = '#75421b';
+                ctx.beginPath();
+                ctx.arc(initialTreeX, seedY - 4, 6.5, 0, Math.PI * 2);
+                ctx.fill();
+
+                if (p >= 1) {
+                    state = 'GROW_TREE';
+                    stateStartTime = now;
+                }
+            }
+
+            // PHASE 2: Organic trunk & branches grow (00:03 - 00:04)
+            else if (state === 'GROW_TREE') {
+                const totalGrowTime = 1450;
+
+                // Full horizontal ground line
+                drawGroundLine();
+
+                ctx.save();
+                ctx.translate(treeBaseX, groundY);
+                branches.forEach(b => {
+                    const bp = Math.max(0, Math.min(1, (elapsed - b.delay) / b.duration));
+                    drawBranch(b, easeOutCubic(bp));
+                });
+                ctx.restore();
+
+                if (elapsed >= totalGrowTime) {
+                    state = 'BLOOM_HEART';
+                    stateStartTime = now;
+                }
+            }
+
+            // PHASE 3: Heart canopy blossoms pop in rapidly (00:04 - 00:05)
+            else if (state === 'BLOOM_HEART') {
+                const totalBloomTime = 1400;
+
+                drawGroundLine();
+
+                ctx.save();
+                ctx.translate(treeBaseX, groundY);
+                branches.forEach(b => drawBranch(b, 1));
+
+                blossoms.forEach(bl => {
+                    const bp = Math.max(0, Math.min(1, (elapsed - bl.delay) / bl.duration));
+                    if (bp > 0) {
+                        const scale = easeOutBack(bp);
+                        drawBlossom(bl.x, bl.y, bl.maxRadius * scale, bl.color, bl.isHeartShape, bl.rotation);
+                    }
+                });
+                ctx.restore();
+
+                if (elapsed >= totalBloomTime) {
+                    state = 'SHIFT_RIGHT';
+                    stateStartTime = now;
+                }
+            }
+
+            // PHASE 4: Smooth glide to the right side of screen (00:06)
+            else if (state === 'SHIFT_RIGHT') {
+                const shiftDuration = 950;
+                const p = Math.min(1, elapsed / shiftDuration);
+                const ease = easeInOutCubic(p);
+
+                treeBaseX = initialTreeX + (targetTreeX - initialTreeX) * ease;
+
+                drawGroundLine();
+                drawFullTree();
+
+                if (p >= 1) {
+                    state = 'TYPING';
+                    stateStartTime = now;
+                    startTypewriterAndCounter();
+                }
+            }
+
+            // PHASE 5: Final resting scene with gentle drifting petals (00:07 - 00:15+)
+            else if (state === 'TYPING') {
+                treeBaseX = targetTreeX;
+                drawGroundLine();
+                drawFullTree();
+
+                if (Math.random() < 0.09) {
+                    spawnFallingPetal();
+                }
+                updateAndDrawFallingPetals();
+            }
+
+            requestAnimationFrame(render);
+        }
+
+        function drawGroundLine() {
+            const margin = width * 0.04;
+            ctx.strokeStyle = '#2b211e';
+            ctx.lineWidth = 2.2;
+            ctx.beginPath();
+            ctx.moveTo(margin, groundY);
+            ctx.lineTo(width - margin, groundY);
+            ctx.stroke();
+        }
+
+        function drawFullTree() {
+            ctx.save();
+            ctx.translate(treeBaseX, groundY);
+            branches.forEach(b => drawBranch(b, 1));
+            blossoms.forEach(bl => {
+                drawBlossom(bl.x, bl.y, bl.maxRadius, bl.color, bl.isHeartShape, bl.rotation);
+            });
+            ctx.restore();
+        }
+
+        function updateAndDrawFallingPetals() {
+            for (let i = fallingPetals.length - 1; i >= 0; i--) {
+                const p = fallingPetals[i];
+                p.swayPhase += 0.04;
+                p.x += p.vx + Math.sin(p.swayPhase) * 0.45;
+                p.y += p.vy;
+                p.rotation += p.vRot;
+
+                if (p.y >= groundY - 2) {
+                    p.y = groundY - 2;
+                    p.vx = 0;
+                    p.vy = 0;
+                    p.vRot = 0;
+                    p.alpha -= 0.008;
+                }
+
+                if (p.alpha <= 0) {
+                    fallingPetals.splice(i, 1);
+                    continue;
+                }
+
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, p.alpha);
+                drawBlossom(p.x, p.y, p.size, p.color, true, p.rotation);
+                ctx.restore();
+            }
+        }
+
+        /**
+         * Typewriter animation + Live ticking counter (00:07 - 00:15)
+         */
+        function startTypewriterAndCounter() {
+            // Fade in the counter smoothly above the ground line
+            counterBox.classList.add('visible');
+
+            let charIndex = 0;
+            const speedMs = 36; // Natural brisk typing cadence matching video
+
+            function typeNextChar() {
+                if (charIndex <= DEDICATION_TEXT.length) {
+                    const currentSlice = DEDICATION_TEXT.slice(0, charIndex);
+                    typedTextEl.innerHTML = escapeHtml(currentSlice) + '<span class="cursor"></span>';
+                    charIndex++;
+                    setTimeout(typeNextChar, speedMs);
+                } else {
+                    // Keep cursor blinking gently at the end just like frame 00:15
+                    typedTextEl.innerHTML = escapeHtml(DEDICATION_TEXT) + '<span class="cursor"></span>';
+                }
+            }
+
+            typeNextChar();
+        }
+
+        function escapeHtml(str) {
+            return str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+        }
+
+        /**
+         * Live Counter formatted identically to the video:
+         * "25 años 19 horas 00 minutos 04 segundos"
+         */
+        function updateLiveCounter() {
+            const now = new Date();
+            let diffMs = Math.max(0, now - startDate);
+
+            const totalSeconds = Math.floor(diffMs / 1000);
+            const secondsPerYear = 365.2425 * 24 * 3600;
+
+            const years = Math.floor(totalSeconds / secondsPerYear);
+            const remainderAfterYears = totalSeconds % Math.floor(secondsPerYear);
+
+            const hours = Math.floor(remainderAfterYears / 3600);
+            const remainderAfterHours = remainderAfterYears % 3600;
+
+            const minutes = Math.floor(remainderAfterHours / 60);
+            const seconds = remainderAfterHours % 60;
+
+            const pad = (n) => String(n).padStart(2, '0');
+
+            counterDisplay.innerHTML =
+                `<strong>${years}</strong> años ` +
+                `<strong>${pad(hours)}</strong> horas ` +
+                `<strong>${pad(minutes)}</strong> minutos ` +
+                `<strong>${pad(seconds)}</strong> segundos`;
+        }
+
+        setInterval(updateLiveCounter, 1000);
+        updateLiveCounter();
+
+        // Trigger the sequence on click or Enter/Space
+        function beginExperience() {
+            if (state !== 'IDLE') return;
+            startTrigger.classList.add('hidden-trigger');
+            resizeCanvas();
+            initTreeStructure();
+            initHeartBlossoms();
+            state = 'SEED_DROP';
+            stateStartTime = performance.now();
+        }
+
+        startTrigger.addEventListener('click', beginExperience);
+        startTrigger.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                beginExperience();
+            }
+        });
+
+        // Allow user to customize start date by tapping the counter
+        const dateModal = document.getElementById('date-modal');
+        const customDateInput = document.getElementById('custom-date-input');
+        const cancelDateBtn = document.getElementById('cancel-date-btn');
+        const saveDateBtn = document.getElementById('save-date-btn');
+
+        counterBox.addEventListener('click', () => {
+            const localIso = new Date(startDate.getTime() - startDate.getTimezoneOffset() * 60000)
+                .toISOString()
+                .slice(0, 16);
+            customDateInput.value = localIso;
+            dateModal.classList.add('open');
+        });
+
+        cancelDateBtn.addEventListener('click', () => {
+            dateModal.classList.remove('open');
+        });
+
+        saveDateBtn.addEventListener('click', () => {
+            if (customDateInput.value) {
+                const chosen = new Date(customDateInput.value);
+                if (!isNaN(chosen.getTime())) {
+                    startDate = chosen;
+                    localStorage.setItem('mama_start_date', String(chosen.getTime()));
+                    updateLiveCounter();
+                }
+            }
+            dateModal.classList.remove('open');
+        });
+
+        // Start animation loop
+        requestAnimationFrame(render);
+    </script>
+</body>
+</html>
